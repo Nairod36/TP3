@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "openzeppelin-contracts/contracts/access/Ownable.sol";
 
 contract WeatherNFT is ERC721URIStorage, Ownable {
     struct WeatherData {
@@ -14,12 +14,11 @@ contract WeatherNFT is ERC721URIStorage, Ownable {
     }
 
     mapping(uint256 => WeatherData[]) public weatherHistory;
-
     uint256 public nextTokenId;
 
-    constructor() ERC721("WeatherNFT", "WNFT") {}
+    // Constructeur : ajoute initialOwner pour Ownable
+    constructor(address initialOwner) ERC721("WeatherNFT", "WNFT") Ownable(initialOwner) {}
 
-    // Mint a new NFT
     function mintNFT(address to, string memory initialUri) external onlyOwner {
         uint256 tokenId = nextTokenId;
         _mint(to, tokenId);
@@ -27,7 +26,6 @@ contract WeatherNFT is ERC721URIStorage, Ownable {
         nextTokenId++;
     }
 
-    // Update weather metadata
     function updateWeather(
         uint256 tokenId,
         int256 temperature,
@@ -35,7 +33,7 @@ contract WeatherNFT is ERC721URIStorage, Ownable {
         uint256 windSpeed,
         string memory weatherImage
     ) external onlyOwner {
-        require(_exists(tokenId), "NFT does not exist");
+        _requireOwned(tokenId);
         WeatherData memory newWeather = WeatherData(
             temperature,
             humidity,
@@ -46,25 +44,23 @@ contract WeatherNFT is ERC721URIStorage, Ownable {
         weatherHistory[tokenId].push(newWeather);
     }
 
-    // Retrieve current weather data
     function getCurrentWeather(uint256 tokenId)
         external
         view
         returns (WeatherData memory)
     {
-        require(_exists(tokenId), "NFT does not exist");
+        _requireOwned(tokenId);
         uint256 historyLength = weatherHistory[tokenId].length;
         require(historyLength > 0, "No weather data available");
         return weatherHistory[tokenId][historyLength - 1];
     }
 
-    // Retrieve weather data by date range
     function getWeatherHistory(uint256 tokenId)
         external
         view
         returns (WeatherData[] memory)
     {
-        require(_exists(tokenId), "NFT does not exist");
+        _requireOwned(tokenId);
         return weatherHistory[tokenId];
     }
 }
