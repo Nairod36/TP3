@@ -1,4 +1,6 @@
-[
+export const CONTRACT_ADDRESS = "0x448d6817C998F7B3c5cb470a1fEfeaa2ce016998";
+export const AVALANCHE_RPC_URL = "https://api.avax-test.network/ext/bc/C/rpc";
+export const ABI = [
     {
       "inputs": [
         {
@@ -751,4 +753,4 @@
       "stateMutability": "nonpayable",
       "type": "function"
     }
-  ]
+  ];

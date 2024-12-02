@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract WeatherNFT is ERC721URIStorage, Ownable {
     struct WeatherData {
@@ -13,17 +13,22 @@ contract WeatherNFT is ERC721URIStorage, Ownable {
         uint256 timestamp;
     }
 
-    mapping(uint256 => WeatherData[]) public weatherHistory;
+    struct WeatherPeriod {
+        WeatherData[] dailyData;
+        WeatherData[] weeklyData;
+        WeatherData[] monthlyData;
+    }
+
+    mapping(uint256 => WeatherPeriod) private weatherHistory;
     uint256 public nextTokenId;
 
-    // Constructeur : ajoute initialOwner pour Ownable
     constructor(address initialOwner) ERC721("WeatherNFT", "WNFT") Ownable(initialOwner) {}
 
-    function mintNFT(address to, string memory initialUri) external onlyOwner {
+    function mintNFT(address to) external onlyOwner returns (uint256) {
         uint256 tokenId = nextTokenId;
         _mint(to, tokenId);
-        _setTokenURI(tokenId, initialUri);
         nextTokenId++;
+        return tokenId;
     }
 
     function updateWeather(
@@ -34,33 +39,60 @@ contract WeatherNFT is ERC721URIStorage, Ownable {
         string memory weatherImage
     ) external onlyOwner {
         _requireOwned(tokenId);
-        WeatherData memory newWeather = WeatherData(
-            temperature,
-            humidity,
-            windSpeed,
-            weatherImage,
-            block.timestamp
-        );
-        weatherHistory[tokenId].push(newWeather);
+        
+        WeatherData memory newWeather = WeatherData({
+            temperature: temperature,
+            humidity: humidity,
+            windSpeed: windSpeed,
+            weatherImage: weatherImage,
+            timestamp: block.timestamp
+        });
+
+        // Ajouter aux données quotidiennes
+        weatherHistory[tokenId].dailyData.push(newWeather);
+
+        // Gérer les données hebdomadaires et mensuelles
+        if (weatherHistory[tokenId].dailyData.length % 7 == 0) {
+            weatherHistory[tokenId].weeklyData.push(newWeather);
+        }
+        
+        if (weatherHistory[tokenId].dailyData.length % 30 == 0) {
+            weatherHistory[tokenId].monthlyData.push(newWeather);
+        }
     }
 
-    function getCurrentWeather(uint256 tokenId)
-        external
-        view
-        returns (WeatherData memory)
-    {
+    function getCurrentWeather(uint256 tokenId) external view returns (WeatherData memory) {
         _requireOwned(tokenId);
-        uint256 historyLength = weatherHistory[tokenId].length;
-        require(historyLength > 0, "No weather data available");
-        return weatherHistory[tokenId][historyLength - 1];
+        uint256 dailyLength = weatherHistory[tokenId].dailyData.length;
+        require(dailyLength > 0, "No weather data available");
+        return weatherHistory[tokenId].dailyData[dailyLength - 1];
     }
 
-    function getWeatherHistory(uint256 tokenId)
-        external
-        view
-        returns (WeatherData[] memory)
-    {
+    function getWeatherHistory(
+        uint256 tokenId, 
+        string memory period
+    ) external view returns (WeatherData[] memory) {
         _requireOwned(tokenId);
-        return weatherHistory[tokenId];
+        
+        if (keccak256(abi.encodePacked(period)) == keccak256(abi.encodePacked("daily"))) {
+            return weatherHistory[tokenId].dailyData;
+        } else if (keccak256(abi.encodePacked(period)) == keccak256(abi.encodePacked("weekly"))) {
+            return weatherHistory[tokenId].weeklyData;
+        } else if (keccak256(abi.encodePacked(period)) == keccak256(abi.encodePacked("monthly"))) {
+            return weatherHistory[tokenId].monthlyData;
+        }
+        
+        revert("Invalid period specified");
+    }
+
+    // Fonction pour simuler des données météorologiques factices
+    function generateMockWeatherData() public view returns (WeatherData memory) {
+        return WeatherData({
+            temperature: 25,
+            humidity: 65,
+            windSpeed: 10,
+            weatherImage: "sunny.png",
+            timestamp: block.timestamp
+        });
     }
 }

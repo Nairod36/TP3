@@ -1,15 +1,19 @@
-import { BrowserProvider } from "ethers";
+import { ethers } from "ethers";
 import { AVALANCHE_RPC_URL, CONTRACT_ADDRESS, ABI } from "../config";
-import { JsonRpcProvider } from "ethers";
-import { Contract } from "ethers";
 
-const provider = new JsonRpcProvider(AVALANCHE_RPC_URL);
-export const contract = new Contract(CONTRACT_ADDRESS, ABI, provider);
+// Créer le provider pour Avalanche Testnet
+const provider = new ethers.JsonRpcProvider(AVALANCHE_RPC_URL);
 
+// Instancier le contrat
+export const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
 
+// Fonction pour obtenir le signataire et connecter le portefeuille (par exemple, MetaMask)
 export const getSigner = async () => {
     const ethereum = (window as any).ethereum;
-    if (!ethereum) throw new Error("Metamask is not installed!");
-    const browserProvider = new BrowserProvider(ethereum);
-    return await browserProvider.getSigner();
+    if (!ethereum) throw new Error("MetaMask is not installed!");
+    
+    const browserProvider = new ethers.BrowserProvider(ethereum);
+    const signer = await browserProvider.getSigner();
+
+    return signer;
 };

@@ -5,17 +5,22 @@ const NFTList = () => {
     const [nfts, setNfts] = useState<any[]>([]);
 
     const fetchNFTs = async () => {
-        const totalSupply = await contract.nextTokenId(); // Suppose un compteur `nextTokenId`
-        const nftData = [];
-        for (let i = 0; i < totalSupply; i++) {
-            try {
-                const weatherData = await contract.getCurrentWeather(i);
-                nftData.push({ tokenId: i, ...weatherData });
-            } catch (err) {
-                console.error(`Error fetching NFT ${i}`, err);
+        try {
+            // Accéder directement à la variable publique nextTokenId
+            const totalSupply = await contract.nextTokenId(); // Cette ligne fonctionne maintenant correctement.
+            const nftData = [];
+            for (let i = 0; i < totalSupply; i++) {
+                try {
+                    const weatherData = await contract.getCurrentWeather(i);
+                    nftData.push({ tokenId: i, ...weatherData });
+                } catch (err) {
+                    console.error(`Error fetching NFT ${i}`, err);
+                }
             }
+            setNfts(nftData);
+        } catch (err) {
+            console.error("Error fetching total supply", err);
         }
-        setNfts(nftData);
     };
 
     useEffect(() => {
