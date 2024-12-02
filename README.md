@@ -36,7 +36,8 @@ $ anvil
 ```shell
 $ forge script script/Weather.s.sol:WeatherNFT --rpc-url <your_rpc_url> --private-key <your_private_key>
 ```
- 
+ ![image](https://github.com/user-attachments/assets/100dfde7-4a92-4b8e-884b-023e5625c64e)
+
 ● Le “mint” des NFTs et la mise à jour périodique des
 métadonnées des NFTs avec des données météorologiques
 actuelles telles que
